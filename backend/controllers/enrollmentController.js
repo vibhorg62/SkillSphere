@@ -40,4 +40,32 @@ const enrollCourse=async(req,res)=>{
 }
 }
 
-export default enrollCourse;
+const myCourses = async (req, res) => {
+  try {
+    if (req.user.role !== "student") {
+      return res.status(403).json({
+        message: "Only students can access enrolled courses",
+      });
+    }
+
+    const enrollments = await Enrollment.find({
+      student: req.user.userId,
+    })
+      .populate("course")
+      .populate("student", "name email");
+
+    return res.status(200).json({
+      success: true,
+      count: enrollments.length,
+      enrollments,
+    });
+  } catch (error) {
+    console.error("My Courses Error:", error);
+
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export { enrollCourse, myCourses };
