@@ -14,6 +14,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use("/api/courses", courseRoutes);
+
 app.use("/api/enrollments", enrollmentRoutes);
 app.get('/', (req, res) => {
   res.send('Hello, SkillSphere!');
