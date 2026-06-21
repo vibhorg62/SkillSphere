@@ -197,6 +197,8 @@ const updateLesson = async (req, res) => {
         const { title, youtubeUrl } = req.body;
         const course = await Course.findById(req.params.id);
 
+        
+
         if (!course) {
             return res.status(404).json({ message: "Course not found" });
         }
