@@ -256,8 +256,6 @@ const deleteLesson = async (req, res) => {
     }
 };
 
-
-
 const getCourseContent = async (req, res) => {
     try {
         const course = await Course.findById(req.params.id).populate("instructor", "name email");
