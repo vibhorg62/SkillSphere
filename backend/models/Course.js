@@ -18,7 +18,6 @@ const courseSchema=new mongoose.Schema({
         type:String,
     },
     thumbnail:{
-        required:true,
         type:String,
     },
     instructor:{
@@ -32,7 +31,12 @@ const courseSchema=new mongoose.Schema({
             type:String,
         },
         youtubeUrl:{
-            required:true,
+            type:String,
+        },
+        videoUrl:{
+            type:String,
+        },
+        thumbnail:{
             type:String,
         }
     }]

@@ -1,16 +1,22 @@
 import Course from "../models/Course.js";
 import Enrollment from "../models/Enrollment.js";
 import Review from "../models/Review.js";
+import { uploadToCloudinary } from "../utils/uploadHelper.js";
 
 const createCourse = async (req, res) => {
     try {
-        const { title, description, price, category, thumbnail, lessons } =
-            req.body;
+        const { title, description, price, category, lessons } = req.body;
+        let thumbnail = req.body.thumbnail;
 
         if (req.user.role !== "instructor") {
             return res.status(403).json({
                 message: "Only instructors can create courses",
             });
+        }
+        
+        if (req.file) {
+            const result = await uploadToCloudinary(req.file.buffer, 'skillsphere/courses/thumbnails', 'image');
+            thumbnail = result.secure_url;
         }
 
         if (!title || !description || !price || !category || !thumbnail) {
@@ -26,7 +32,7 @@ const createCourse = async (req, res) => {
             category,
             thumbnail,
             instructor: req.user.userId,
-            lessons: lessons || [],
+            lessons: lessons ? JSON.parse(lessons) : [],
         });
 
         return res.status(201).json({
@@ -122,8 +128,20 @@ const updateCourse = async (req, res) => {
         if (description !== undefined) course.description = description;
         if (price !== undefined) course.price = price;
         if (category !== undefined) course.category = category;
-        if (thumbnail !== undefined) course.thumbnail = thumbnail;
-        if (lessons !== undefined) course.lessons = lessons;
+        if (req.file) {
+            const result = await uploadToCloudinary(req.file.buffer, 'skillsphere/courses/thumbnails', 'image');
+            course.thumbnail = result.secure_url;
+        } else if (thumbnail !== undefined) {
+            course.thumbnail = thumbnail;
+        }
+        
+        if (lessons !== undefined) {
+            try {
+                course.lessons = typeof lessons === 'string' ? JSON.parse(lessons) : lessons;
+            } catch (e) {
+                course.lessons = lessons;
+            }
+        }
         const updatedCourse = await course.save();
         return res.status(200).json({
             success: true,
@@ -174,11 +192,25 @@ const addLesson = async (req, res) => {
         if (course.instructor.toString() !== req.user.userId) {
             return res.status(403).json({ message: "You are not authorized to add lessons to this course" });
         }
-        if (!title || !youtubeUrl) {
-            return res.status(400).json({ message: "Title and YouTube URL are required" });
+        let videoUrl;
+        let thumbnailUrl;
+
+        if (req.files) {
+            if (req.files.video && req.files.video.length > 0) {
+                const result = await uploadToCloudinary(req.files.video[0].buffer, 'skillsphere/courses/videos', 'video');
+                videoUrl = result.secure_url;
+            }
+            if (req.files.thumbnail && req.files.thumbnail.length > 0) {
+                const result = await uploadToCloudinary(req.files.thumbnail[0].buffer, 'skillsphere/courses/thumbnails', 'image');
+                thumbnailUrl = result.secure_url;
+            }
         }
 
-        course.lessons.push({ title, youtubeUrl });
+        if (!title || (!youtubeUrl && !videoUrl)) {
+            return res.status(400).json({ message: "Title and either a YouTube URL or a video file are required" });
+        }
+
+        course.lessons.push({ title, youtubeUrl, videoUrl, thumbnail: thumbnailUrl });
         await course.save();
 
         return res.status(201).json({
@@ -209,6 +241,17 @@ const updateLesson = async (req, res) => {
         const lesson = course.lessons.id(req.params.lessonId);
         if (!lesson) {
             return res.status(404).json({ message: "Lesson not found" });
+        }
+
+        if (req.files) {
+            if (req.files.video && req.files.video.length > 0) {
+                const result = await uploadToCloudinary(req.files.video[0].buffer, 'skillsphere/courses/videos', 'video');
+                lesson.videoUrl = result.secure_url;
+            }
+            if (req.files.thumbnail && req.files.thumbnail.length > 0) {
+                const result = await uploadToCloudinary(req.files.thumbnail[0].buffer, 'skillsphere/courses/thumbnails', 'image');
+                lesson.thumbnail = result.secure_url;
+            }
         }
 
         if (title !== undefined) lesson.title = title;
