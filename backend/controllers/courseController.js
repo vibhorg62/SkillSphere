@@ -43,7 +43,8 @@ const createCourse = async (req, res) => {
         console.error("Create Course Error:", error);
 
         return res.status(500).json({
-            message: "Internal Server Error",
+            message: error.message || "Internal Server Error",
+            error: error
         });
     }
 };
@@ -88,6 +89,18 @@ const getCourseById = async (req, res) => {
         }
 
         const course = courseDoc.toObject();
+        let isEnrolled = false;
+        
+        if (req.user && req.user.role === 'student') {
+            const enrollment = await Enrollment.findOne({
+                student: req.user.userId,
+                course: req.params.id
+            });
+            if (enrollment) {
+                isEnrolled = true;
+            }
+        }
+
         const reviews = await Review.find({ course: req.params.id });
         let averageRating = 0;
         if (reviews.length > 0) {
@@ -100,6 +113,7 @@ const getCourseById = async (req, res) => {
         return res.status(200).json({
             success: true,
             course,
+            isEnrolled
         });
     }
     catch (error) {
@@ -220,7 +234,7 @@ const addLesson = async (req, res) => {
         });
     } catch (error) {
         console.error("Add Lesson Error:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
+        return res.status(500).json({ message: error.message || "Internal Server Error" });
     }
 };
 

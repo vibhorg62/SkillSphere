@@ -6,8 +6,6 @@ import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
 import enrollmentRoutes from './routes/enrollmentRoutes.js';
 import progressRoutes from './routes/progressRoutes.js';
-import quizRoutes from './routes/quizRoutes.js';
-import certificateRoutes from './routes/certificateRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 
 const app = express();
@@ -20,8 +18,6 @@ app.use("/api/courses", courseRoutes);
 
 app.use("/api/enrollments", enrollmentRoutes);
 app.use("/api/progress", progressRoutes);
-app.use("/api/quizzes", quizRoutes);
-app.use("/api/certificates", certificateRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.get('/', (req, res) => {
   res.send('Hello, SkillSphere!');
